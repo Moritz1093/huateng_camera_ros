@@ -1,7 +1,7 @@
 // Shared memory "timeshare" between livox_ros_driver (writer) and this camera driver (reader).
 //
 // Same file as in https://github.com/Moritz1093/LIV_handhold (livox_ros_driver/livox_ros_driver/timeshare.h),
-// format from https://github.com/sheng00125/LIV_handhold. Struct and functions must stay identical in both.
+// format from https://github.com/xuankuzcr/LIV_handhold. Struct and functions must stay identical in both.
 //
 // A 16-byte file mapped with mmap. Layout unchanged from LIV_handhold: {int64 high; int64 low;}
 //   low  = LiDAR/MCU time (ns) of the start of the most recently published LiDAR frame

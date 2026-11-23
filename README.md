@@ -8,7 +8,7 @@ ROS 1 **and** ROS 2 driver for **Huateng Vision** industrial cameras (MindVision
   only what is subscribed is converted
 - Grab and publish run in separate threads, so a slow subscriber never blocks the camera
 - Optional **LiDAR time sync**: with a hardware-synced LiDAR-camera rig (MCU trigger + PPS, as in
-  [LIV_handhold](https://github.com/sheng00125/LIV_handhold)) the images are stamped in LiDAR time, on the trigger
+  [LIV_handhold](https://github.com/xuankuzcr/LIV_handhold)) the images are stamped in LiDAR time, on the trigger
   grid (no `img_time_offset` needed in e.g. FAST-LIVO2)
 - `camera_info_manager` with `set_camera_info`, so `camera_calibration` can write the calibration directly
 
@@ -95,7 +95,7 @@ Most important keys: `TriggerMode` (`Continuous` / `Software` / `Hardware`), `Tr
 ## 5. LiDAR time sync (optional)
 
 For LiDAR-camera fusion (e.g. [FAST-LIVO2](https://github.com/hku-mars/FAST-LIVO2)) the image stamps must be in
-the LiDAR's clock. The hardware sync scheme is the one of [LIV_handhold](https://github.com/sheng00125/LIV_handhold)
+the LiDAR's clock. The hardware sync scheme is the one of [LIV_handhold](https://github.com/xuankuzcr/LIV_handhold)
 (HKU MARS): an STM32 sends PPS + GPRMC to the LiDAR and triggers the camera on the same 100 ms grid.
 
 **Needed**
@@ -105,6 +105,10 @@ the LiDAR's clock. The hardware sync scheme is the one of [LIV_handhold](https:/
   only writes the LiDAR time; this driver then has no host time and drops the images
 - `config:=lidar_sync` (`TimeSource: LiDAR`, `TriggerMode: Hardware`), `TimeStampPath` = `timeshare_path` of the
   LiDAR driver (both default to `$HOME/timeshare`). In Docker, both drivers must see the same file
+
+> **Limitation:** a LiDAR driver that writes the host time exists so far only for **ROS 1 and the Livox Avia**
+> (`livox_ros_driver`, Livox SDK 1). `livox_ros_driver2` (MID-360, HAP, ROS 1/ROS 2) in LIV_handhold still writes
+> only the LiDAR time. Under ROS 2, or with `livox_ros_driver2`, use `TimeSource: Host` until it gets the same change.
 
 **How it works**
 1. From `timeshare` the driver estimates the offset host clock ↔ LiDAR clock (minimum latency over a window).
@@ -150,7 +154,7 @@ stamp logic with lost images, latency, clock drift and an MCU restart).
 
 - Driver code: written from scratch on top of the Huateng/MindVision SDK. **MIT license**, see [LICENSE](LICENSE).
 - LiDAR time sync: hardware scheme, MCU firmware and the `timeshare` format (`{int64 high; int64 low;}`) from
-  [LIV_handhold](https://github.com/sheng00125/LIV_handhold) (GPL-3.0). Only the data layout is shared, no code is
+  [LIV_handhold](https://github.com/xuankuzcr/LIV_handhold) (GPL-3.0). Only the data layout is shared, no code is
   copied; the matching LiDAR driver is in the fork [Moritz1093/LIV_handhold](https://github.com/Moritz1093/LIV_handhold).
 - Huateng Vision / MindVision SDK: closed source, property of the manufacturer, not included and not covered by the
   MIT license.
