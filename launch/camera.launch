@@ -1,0 +1,13 @@
+<launch>
+	<!-- ROS 1: roslaunch huateng_camera_ros camera.launch [config:=lidar_sync] [config_path:=/path/to/file.yaml] -->
+	<arg name="config" default="camera"/>
+	<arg name="config_path" default="$(find huateng_camera_ros)/config/$(arg config).yaml"/>
+	<arg name="time_source" default=""/>   <!-- override: host / lidar -->
+	<arg name="log_frames" default="0"/>   <!-- diagnostics: log raw values of the first N images -->
+
+	<node pkg="huateng_camera_ros" type="camera_driver" name="camera_driver" output="screen">
+		<param name="config_path" value="$(arg config_path)"/>
+		<param name="time_source" value="$(arg time_source)"/>
+		<param name="log_frames" value="$(arg log_frames)"/>
+	</node>
+</launch>

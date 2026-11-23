@@ -1,0 +1,36 @@
+%YAML:1.0
+# Configuration of huateng_camera_ros (read with cv::FileStorage, same file for ROS 1 and ROS 2).
+# This file: free-running camera, host time stamps. For hardware trigger + LiDAR time see lidar_sync.yaml.
+# Missing keys keep their built-in defaults.
+
+# --- Names and paths ---
+CameraName: "camera"            # must match camera_name in the calibration file
+FrameId: "camera_frame"
+TopicNameRaw: "camera/image_raw"
+TopicNameCompressed: "camera/image/compressed"
+TopicNameCameraInfo: "camera/camera_info"
+CalibrationPath: ""             # e.g. "file:///home/user/calibration.yaml"; empty = ~/.ros/camera_info/<CameraName>.yaml
+SerialNumber: ""                # empty = first camera found; set it when several cameras are connected
+
+# --- Camera ---
+ExposureAuto: "On"              # "On" / "Off"
+ExposureTarget: 120             # target brightness for auto exposure (20 - 160)
+ExposureTimeUs: 10000           # only with ExposureAuto "Off"
+TriggerMode: "Continuous"       # "Continuous", "Software", "Hardware"
+# TriggerSignal: "RisingEdge"   # "RisingEdge" / "FallingEdge"; commented out = keep the camera's setting
+WhiteBalanceAuto: "On"
+Orientation: 0                  # clockwise: 0 = normal, 1 = 90 deg, 2 = 180 deg, 3 = 270 deg
+ISPFormat: "CAMERA_MEDIA_TYPE_RGB8"   # or CAMERA_MEDIA_TYPE_BGR8
+# Gamma: 40                     # 30 - 240; commented out = keep the camera's setting
+FrameSpeed: -1                  # -1 = highest level; else 0 low, 1 normal, 2 high (GigE transfer speed)
+
+# --- Output ---
+# Only what is subscribed is converted. The JPEG is always color.
+RawEncoding: "color"            # "color" (rgb8/bgr8) or "mono8"
+JpegQuality: 90                 # 10 - 100
+QueueSize: 3                    # images between grab and publish thread; full = drop the oldest
+
+# --- Time stamps ---
+TimeSource: "Host"              # "Host" = host clock, "LiDAR" = LiDAR time from timeshare (see lidar_sync.yaml)
+StampAtMidExposure: "Off"       # "On" = stamp at mid-exposure instead of exposure start
+TransferLatencySec: 0.012       # GigE transfer of one image, rough estimate (stamp = received - exposure - this)

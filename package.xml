@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>huateng_camera_ros</name>
+  <version>1.0.0</version>
+  <description>
+    ROS 1 and ROS 2 driver for Huateng Vision (MindVision MVSDK) industrial cameras, e.g. HT-GE134GC.
+    Free-running or hardware-triggered; optional time stamps in LiDAR time for hardware-synced LiDAR-camera rigs
+    (timeshare from livox_ros_driver, as in LIV_handhold).
+  </description>
+  <maintainer email="157827039+Moritz1093@users.noreply.github.com">Moritz</maintainer>
+  <license>MIT</license>
+  <url type="repository">https://github.com/Moritz1093/huateng_camera_ros</url>
+
+  <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
+  <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake</buildtool_depend>
+
+  <depend condition="$ROS_VERSION == 1">roscpp</depend>
+  <depend condition="$ROS_VERSION == 2">rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>camera_info_manager</depend>
+  <depend>libopencv-dev</depend>
+
+  <export>
+    <build_type condition="$ROS_VERSION == 1">catkin</build_type>
+    <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>
+  </export>
+</package>

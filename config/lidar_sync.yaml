@@ -1,0 +1,41 @@
+%YAML:1.0
+# huateng_camera_ros with hardware trigger and time stamps in LiDAR time.
+# Needs: MCU (e.g. STM32 from LIV_handhold) triggering the camera and sending PPS/GPRMC to the LiDAR, and the
+# livox_ros_driver from https://github.com/Moritz1093/LIV_handhold (writes the host time into timeshare).
+# See README, "LiDAR time sync". Missing keys keep their built-in defaults (see camera.yaml).
+
+CameraName: "camera"
+FrameId: "camera_frame"
+TopicNameRaw: "camera/image_raw"
+TopicNameCompressed: "camera/image/compressed"
+TopicNameCameraInfo: "camera/camera_info"
+CalibrationPath: ""
+TimeStampPath: ""               # empty = $HOME/timeshare (default of livox_ros_driver); must match its timeshare_path
+
+ExposureAuto: "On"
+ExposureTarget: 120
+TriggerMode: "Hardware"
+# The trigger edge that starts the exposure. Check it once (see README): the camera input may be inverted
+# (opto-coupler), then "FallingEdge" of the camera = rising edge of the MCU. Set it explicitly, the camera keeps a
+# changed setting until power is removed.
+TriggerSignal: "RisingEdge"
+WhiteBalanceAuto: "On"
+Orientation: 0
+ISPFormat: "CAMERA_MEDIA_TYPE_RGB8"
+FrameSpeed: -1
+
+RawEncoding: "color"
+JpegQuality: 90
+QueueSize: 3
+
+# --- Time stamps in LiDAR time ---
+# Stamp = exposure start in MCU/LiDAR time. The MCU puts the trigger edge on the PPS grid the LiDAR also stamps
+# with. The driver estimates the exposure start (received - exposure - transfer, accurate to a few ms) and rounds
+# it to the nearest grid point.
+TimeSource: "LiDAR"
+TriggerPeriodSec: 0.1           # must match the MCU firmware (10 Hz)
+SnapToTriggerGrid: "On"         # round to the trigger grid (estimate only has to be within +-period/2)
+TriggerPhaseSec: 0.0            # position of the triggering edge relative to the grid (e.g. falling edge: 0.05)
+TransferLatencySec: 0.012
+StampAtMidExposure: "Off"
+LidarFallbackHostTime: "Off"    # "On" = without LiDAR time stamp with host time instead of dropping images
