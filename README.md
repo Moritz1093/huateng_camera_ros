@@ -12,9 +12,10 @@ ROS 1 **and** ROS 2 driver for **Huateng Vision** industrial cameras (MindVision
   grid (no `img_time_offset` needed in e.g. FAST-LIVO2)
 - `camera_info_manager` with `set_camera_info`, so `camera_calibration` can write the calibration directly
 
-**Status:** The driver logic is in use on a Raspberry Pi 4 (ROS 1 Noetic in Docker) with an HT-GE134GC,
-hardware-triggered at 10 Hz together with a Livox Avia. This package (ROS 1/ROS 2 in one) is build-tested on
-Noetic, Humble and Jazzy (x86_64); a hardware test of this version is pending.
+**Status:** In use on a Raspberry Pi 4 (arm64, ROS 1 Noetic in Docker) with an HT-GE134GC, hardware-triggered at
+10 Hz together with a Livox Avia (`TimeSource: LiDAR`): 100 images per 10 s, no lost triggers, image stamps within
+1 ms of the LiDAR stamps, JPEG and mono8 output checked in recorded bags. ROS 2 (Humble, Jazzy) is build-tested
+(x86_64) but not yet run on hardware.
 
 ## 1. Install the SDK
 
