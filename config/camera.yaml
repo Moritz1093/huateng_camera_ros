@@ -16,6 +16,10 @@ SerialNumber: ""                # empty = first camera found; set it when severa
 ExposureAuto: "On"              # "On" / "Off"
 ExposureTarget: 120             # target brightness for auto exposure (20 - 160)
 ExposureTimeUs: 10000           # only with ExposureAuto "Off"
+# AeExposureMaxUs: 10000        # AE: longest exposure (motion blur!); commented out = keep the camera's setting
+# AeGainMax: 8.0                # AE: highest analog gain factor (noise); commented out = keep the camera's setting
+AeRestartEveryN: 1              # trigger mode only: with a trigger the SDK's AE stops after the first image and
+                                # keeps that exposure. Re-enable AE every N images to keep it regulating (0 = off)
 TriggerMode: "Continuous"       # "Continuous", "Software", "Hardware"
 # TriggerSignal: "RisingEdge"   # "RisingEdge" / "FallingEdge"; commented out = keep the camera's setting
 WhiteBalanceAuto: "On"

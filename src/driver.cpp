@@ -117,6 +117,9 @@ class TimeShareReader {
 struct Stats {
   std::atomic<uint64_t> received{0}, published{0}, missed_trigger{0}, dropped_queue{0}, unstamped{0};
   std::atomic<uint64_t> isp_us{0}, isp_n{0}, pub_us{0}, pub_n{0};
+  // exposure of the received images (written by the grab thread only)
+  std::atomic<uint64_t> exp_sum_us{0}, gain_sum_milli{0};
+  std::atomic<uint32_t> exp_min_us{UINT32_MAX}, exp_max_us{0};
 };
 
 }  // namespace
@@ -228,6 +231,31 @@ struct Driver::Impl {
     }
     max_bytes = static_cast<size_t>(cap.sResolutionRange.iWidthMax) * cap.sResolutionRange.iHeightMax * 3;
 
+    // Auto exposure limits. Long exposure = motion blur (a global shutter only helps with short exposure), high
+    // gain = noise
+    if (cfg.exposure_auto) {
+      double exp_min = 0, exp_max = 0;
+      CameraGetAeExposureRange(cam, &exp_min, &exp_max);
+      if (cfg.ae_exposure_max_us > 0) {
+        if (CameraSetAeExposureRange(cam, exp_min, cfg.ae_exposure_max_us) != CAMERA_STATUS_SUCCESS)
+          log(LogLevel::Warn, fmt("CameraSetAeExposureRange(%.0f, %.0f us) failed", exp_min, cfg.ae_exposure_max_us));
+        CameraGetAeExposureRange(cam, &exp_min, &exp_max);
+      }
+      const float step = cap.sExposeDesc.fAnalogGainStep;
+      int gain_min = 0, gain_max = 0;
+      CameraGetAeAnalogGainRange(cam, &gain_min, &gain_max);
+      if (cfg.ae_gain_max > 0 && step > 0) {
+        const int want = std::max<int>(gain_min, static_cast<int>(cfg.ae_gain_max / step + 0.5));
+        if (CameraSetAeAnalogGainRange(cam, gain_min, want) != CAMERA_STATUS_SUCCESS)
+          log(LogLevel::Warn, fmt("CameraSetAeAnalogGainRange(%d, %d) failed", gain_min, want));
+        CameraGetAeAnalogGainRange(cam, &gain_min, &gain_max);
+      }
+      ae_kick = cfg.trigger_mode != 0 && cfg.ae_restart_every > 0;
+      log(LogLevel::Info, fmt("AE range: exposure %.0f - %.0f us, gain %.2f - %.2fx | restart %s", exp_min, exp_max,
+                              gain_min * step, gain_max * step,
+                              ae_kick ? fmt("every %d image(s)", cfg.ae_restart_every).c_str() : "off"));
+    }
+
     // Speed level (low/normal/high/super). Sets the transfer rate over GigE. In "normal" the HT-GE134GC only
     // reaches ~6 fps, therefore default: highest level
     int speed_before = -1;
@@ -267,10 +295,22 @@ struct Driver::Impl {
       }
       const int64_t recv_ns = hostNowNs();
       ++stats.received;
+      stats.exp_sum_us += head.uiExpTime;
+      stats.gain_sum_milli += static_cast<uint64_t>(head.fAnalogGain * 1000.0f);
+      if (head.uiExpTime < stats.exp_min_us) stats.exp_min_us = head.uiExpTime;
+      if (head.uiExpTime > stats.exp_max_us) stats.exp_max_us = head.uiExpTime;
+      // With hardware/software trigger the SDK's auto exposure stops after the first image and keeps that
+      // exposure (measured with the HT-GE134GC: 10 ms fixed, window or dark room). Re-enabling AE after each image
+      // keeps it regulating, one step per image
+      if (ae_kick && --ae_restart_left <= 0) {
+        CameraSetAeState(cam, TRUE);
+        ae_restart_left = cfg.ae_restart_every;
+      }
       if (log_frames_left > 0) {
         --log_frames_left;
-        log(LogLevel::Info, fmt("Image: cam_ts %u (d %d), exp %u us, trig %d, recv %.4f (d %.1f ms)", head.uiTimeStamp,
-                                static_cast<int>(head.uiTimeStamp - last_log_cam), head.uiExpTime,
+        log(LogLevel::Info, fmt("Image: cam_ts %u (d %d), exp %u us, gain %.2fx, trig %d, recv %.4f (d %.1f ms)",
+                                head.uiTimeStamp, static_cast<int>(head.uiTimeStamp - last_log_cam), head.uiExpTime,
+                                head.fAnalogGain,
                                 static_cast<int>(head.bIsTrigger), recv_ns * 1e-9, (recv_ns - last_log_recv) * 1e-6));
         last_log_cam = head.uiTimeStamp;
         last_log_recv = recv_ns;
@@ -386,6 +426,8 @@ struct Driver::Impl {
   HostMcuOffset offset;
   TriggerClock clock;
   int log_frames_left = 0;
+  int ae_restart_left = 0;
+  bool ae_kick = false;  // AE on, trigger mode and AeRestartEveryN > 0
   uint32_t last_log_cam = 0;
   int64_t last_log_recv = 0;
 
@@ -453,6 +495,12 @@ std::string Driver::statsLine() {
                          static_cast<unsigned long>(rx), static_cast<unsigned long>(pub),
                          static_cast<unsigned long>(miss), static_cast<unsigned long>(drop),
                          isp_n ? isp_us / 1000.0 / isp_n : 0.0, pub_n ? pub_us / 1000.0 / pub_n : 0.0);
+  const uint64_t exp_sum = s.exp_sum_us.exchange(0), gain_sum = s.gain_sum_milli.exchange(0);
+  const uint32_t exp_min = s.exp_min_us.exchange(UINT32_MAX), exp_max = s.exp_max_us.exchange(0);
+  if (rx) {
+    line += fmt(" | exposure %.1f ms (%.1f - %.1f), gain %.2fx", exp_sum / 1000.0 / rx, exp_min / 1000.0,
+                exp_max / 1000.0, gain_sum / 1000.0 / rx);
+  }
   if (d.cfg.time_source == TimeSource::Lidar) {
     line += fmt(" | %lu without LiDAR time, host-MCU %.3f s, estimate - grid %.1f ms", static_cast<unsigned long>(unst),
                 d.offset_for_log.load() / 1e9, dev_n ? dev_sum / 1e6 / dev_n : 0.0);

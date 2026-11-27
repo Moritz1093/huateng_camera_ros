@@ -30,6 +30,9 @@ struct Config {
   bool exposure_auto = true;
   int exposure_target = 120;
   double exposure_time_us = 10000.0;  // used only with ExposureAuto Off
+  double ae_exposure_max_us = -1.0;   // AE: longest exposure; -1 = keep camera setting
+  double ae_gain_max = -1.0;          // AE: highest analog gain (factor); -1 = keep camera setting
+  int ae_restart_every = 1;           // AE with trigger: re-enable AE every N images (0 = off), see camera.yaml
   int trigger_mode = 0;               // 0 = continuous, 1 = software, 2 = hardware
   std::string trigger_signal;         // empty = keep camera setting, else "RisingEdge" / "FallingEdge"
   bool wb_auto = true;

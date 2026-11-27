@@ -89,7 +89,7 @@ Two examples in [config/](config/), all keys are commented there:
 | [lidar_sync.yaml](config/lidar_sync.yaml) | hardware trigger, time stamps in LiDAR time |
 
 Most important keys: `TriggerMode` (`Continuous` / `Software` / `Hardware`), `TriggerSignal` (`RisingEdge` /
-`FallingEdge`), `ExposureAuto`, `Orientation` (rotation in 90 deg steps), `RawEncoding` (`color` / `mono8`),
+`FallingEdge`), `ExposureAuto`, `AeExposureMaxUs` / `AeGainMax` (limits of the auto exposure), `Orientation` (rotation in 90 deg steps), `RawEncoding` (`color` / `mono8`),
 `JpegQuality`, `FrameSpeed` (GigE speed level, `-1` = highest), `SerialNumber` (several cameras),
 `TimeSource` (`Host` / `LiDAR`), `CalibrationPath`.
 
@@ -146,6 +146,7 @@ free-running camera with `TimeSource: Host` is enough.
 | `triggers without image` | Exposure longer than the trigger period, or bandwidth (see above) |
 | Images dropped, `without LiDAR time` | LiDAR driver running? Same `timeshare` path? Using the LiDAR driver from Moritz1093/LIV_handhold? |
 | Stamps off by ~50 ms | wrong `TriggerSignal`, see section 5 |
+| Brightness does not adapt with a trigger | `AeRestartEveryN: 1` (the SDK's AE stops after the first triggered image); the statistics line shows `exposure … ms (min - max)` |
 | Camera already in use | another process (e.g. the Windows/Linux demo) holds the camera |
 
 Tests without a camera: `g++ -std=c++17 -Iinclude test/test_trigger_clock.cpp -o t && ./t` (simulation of the time

@@ -14,6 +14,8 @@ TimeStampPath: ""               # empty = $HOME/timeshare (default of livox_ros_
 
 ExposureAuto: "On"
 ExposureTarget: 120
+AeExposureMaxUs: 10000          # AE: longest exposure; keep it short when moving (motion blur)
+AeRestartEveryN: 1              # with a trigger the SDK's AE stops after the first image; re-enable it every image
 TriggerMode: "Hardware"
 # The trigger edge that starts the exposure. Check it once (see README): the camera input may be inverted
 # (opto-coupler), then "FallingEdge" of the camera = rising edge of the MCU. Set it explicitly, the camera keeps a

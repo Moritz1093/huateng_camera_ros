@@ -77,6 +77,9 @@ bool loadConfig(const std::string &path, Config &c, const LogFn &log) {
     readBool(fs, "ExposureAuto", c.exposure_auto);
     readInt(fs, "ExposureTarget", c.exposure_target);
     readDouble(fs, "ExposureTimeUs", c.exposure_time_us);
+    readDouble(fs, "AeExposureMaxUs", c.ae_exposure_max_us);
+    readDouble(fs, "AeGainMax", c.ae_gain_max);
+    readInt(fs, "AeRestartEveryN", c.ae_restart_every);
     std::string trig;
     readString(fs, "TriggerMode", trig);
     trig = lower(trig);
